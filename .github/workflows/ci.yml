@@ -5,56 +5,59 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch: {}  # allow manual runs
+  workflow_dispatch: {}
 
 jobs:
-  build_and_analysis:
-    name: Cppcheck + Build
-    runs-on: windows-latest
-
+  # -------------------------------
+  # 1. Static Analysis Job (Linux)
+  # -------------------------------
+  cppcheck:
+    name: Static Analysis (Cppcheck)
+    runs-on: ubuntu-latest
     steps:
-      # -------------------------------
-      # 1. Checkout your code
-      # -------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # -------------------------------
-      # 2. Run static analysis (Cppcheck)
-      # -------------------------------
-      - name: Run Cppcheck analysis
+      - name: Run Cppcheck
         uses: deep5050/cppcheck-action@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           enable: all
           std: c11
           output_file: cppcheck_report.txt
+          fail_on_error: true
 
-      # -------------------------------
-      # 3. Install GCC (MinGW)
-      # -------------------------------
+      - name: Upload Cppcheck report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cppcheck-report
+          path: cppcheck_report.txt
+
+  # -------------------------------
+  # 2. Build Job (Windows)
+  # -------------------------------
+  build:
+    name: Build (GCC on Windows)
+    runs-on: windows-latest
+    needs: cppcheck
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Install GCC (MinGW)
         run: |
           choco install -y mingw make
           refreshenv
           gcc --version
 
-      # -------------------------------
-      # 4. Build C code
-      # -------------------------------
-      - name: Build C application
+      - name: Build application
         run: |
           echo "Compiling source files..."
           gcc src/Main.c -o main.exe
           echo "Build completed successfully."
 
-      # -------------------------------
-      # 5. Upload build + report artifacts
-      # -------------------------------
-      - name: Upload build and analysis artifacts
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-and-analysis-results
-          path: |
-            main.exe
-            cppcheck_report.txt
+          name: build-results
+          path: main.exe
