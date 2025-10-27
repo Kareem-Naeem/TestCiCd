@@ -28,7 +28,7 @@ jobs:
           enable: all
           std: c11
           output_file: cppcheck_report.txt
-          other_options: "--error-exitcode=1 -I Src"
+          other_options: "--error-exitcode=1 -I src -I /usr/include -I /usr/lib/gcc/x86_64-linux-gnu/11/include"
 
       # Upload Cppcheck report
       - name: Upload Cppcheck report
