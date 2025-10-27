@@ -19,7 +19,7 @@ jobs:
           gcc --version
 
       - name: Build
-        run: gcc Main.c -o main.exe
+        run: gcc Src/Main.c -o main.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
