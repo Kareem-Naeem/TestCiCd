@@ -1,28 +1,60 @@
-name: Build on Windows (GCC)
+name: C CI/CD with MISRA and Build
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch: {}  # allows manual trigger
 
 jobs:
-  build:
+  build_and_misra:
+    name: MISRA Check + Build
     runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Install GCC (MinGW) + Make
+    steps:
+      # -------------------------------
+      # 1. Checkout repository
+      # -------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # -------------------------------
+      # 2. Install GCC (MinGW) and Cppcheck
+      # -------------------------------
+      - name: Install GCC (MinGW) and Cppcheck
         run: |
-          choco install -y mingw make
+          choco install -y mingw make cppcheck
           refreshenv
           gcc --version
+          cppcheck --version
 
-      - name: Build
-        run: gcc Src/Main.c -o main.exe
+      # -------------------------------
+      # 3. Run MISRA checks using Cppcheck
+      # -------------------------------
+      - name: Run MISRA check (Cppcheck)
+        run: |
+          echo "Running MISRA compliance analysis..."
+          cppcheck --enable=all --std=c11 --suppress=missingIncludeSystem --addon=misra --error-exitcode=1 src 2> cppcheck_report.txt
+          echo "---- MISRA check completed ----"
+          type cppcheck_report.txt
 
-      - name: Upload artifact
+      # -------------------------------
+      # 4. Build the C application
+      # -------------------------------
+      - name: Build C application
+        run: |
+          echo "Building project..."
+          gcc src/Main.c -o main.exe
+          echo "---- Build completed ----"
+
+      # -------------------------------
+      # 5. Upload artifacts
+      # -------------------------------
+      - name: Upload artifacts (exe + MISRA report)
         uses: actions/upload-artifact@v4
         with:
-          name: main
-          path: main.exe
+          name: build-and-misra-results
+          path: |
+            main.exe
+            cppcheck_report.txt
