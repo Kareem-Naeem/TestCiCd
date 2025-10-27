@@ -1,0 +1,28 @@
+name: Build on Windows (GCC)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GCC (MinGW) + Make
+        run: |
+          choco install -y mingw make
+          refreshenv
+          gcc --version
+
+      - name: Build
+        run: gcc Main.c -o main.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: main
+          path: main.exe
