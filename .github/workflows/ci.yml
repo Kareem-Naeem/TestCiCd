@@ -1,57 +1,60 @@
-name: C CI/CD with MISRA and Build (fixed cppcheck)
+name: C CI/CD with Static Analysis and Build
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch: {}
+  workflow_dispatch: {}  # allow manual runs
 
 jobs:
-  build_and_misra:
+  build_and_analysis:
+    name: Cppcheck + Build
     runs-on: windows-latest
+
     steps:
-      # 1. Checkout
+      # -------------------------------
+      # 1. Checkout your code
+      # -------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Install GCC
+      # -------------------------------
+      # 2. Run static analysis (Cppcheck)
+      # -------------------------------
+      - name: Run Cppcheck analysis
+        uses: deep5050/cppcheck-action@main
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          enable: all
+          std: c11
+          output_file: cppcheck_report.txt
+
+      # -------------------------------
+      # 3. Install GCC (MinGW)
+      # -------------------------------
       - name: Install GCC (MinGW)
         run: |
           choco install -y mingw make
           refreshenv
           gcc --version
 
-      # 3. Download and setup Cppcheck (official zip)
-      - name: Download Cppcheck portable release
-        shell: pwsh
-        run: |
-          $url = "https://github.com/danmar/cppcheck/releases/download/2.14/Cppcheck-2.14-x64.zip"
-          Invoke-WebRequest -Uri $url -OutFile cppcheck.zip
-          Expand-Archive cppcheck.zip -DestinationPath cppcheck
-          $env:Path += ";$PWD\cppcheck"
-          cppcheck\cppcheck.exe --version
-
-      # 4. Run MISRA check
-      - name: Run MISRA check (Cppcheck)
-        shell: pwsh
-        run: |
-          echo "Running MISRA compliance analysis..."
-          cppcheck\cppcheck.exe --enable=all --std=c11 --suppress=missingIncludeSystem --addon=misra --error-exitcode=1 src 2> cppcheck_report.txt
-          echo "---- MISRA check completed ----"
-          type cppcheck_report.txt
-
-      # 5. Build
+      # -------------------------------
+      # 4. Build C code
+      # -------------------------------
       - name: Build C application
         run: |
+          echo "Compiling source files..."
           gcc src/Main.c -o main.exe
-          echo "Build completed"
+          echo "Build completed successfully."
 
-      # 6. Upload artifacts
-      - name: Upload artifacts (exe + MISRA report)
+      # -------------------------------
+      # 5. Upload build + report artifacts
+      # -------------------------------
+      - name: Upload build and analysis artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-and-misra-results
+          name: build-and-analysis-results
           path: |
             main.exe
             cppcheck_report.txt
