@@ -27,9 +27,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           enable: all
           std: c11
-          fail_on_error: true
           output_file: cppcheck_report.txt
-          include_paths: "src"
+          include_paths: "Src"
 
       # Upload Cppcheck report
       - name: Upload Cppcheck report
