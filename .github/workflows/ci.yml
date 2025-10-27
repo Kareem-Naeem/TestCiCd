@@ -26,7 +26,8 @@ jobs:
       - name: Download Cppcheck portable release
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri https://github.com/danmar/cppcheck/releases/download/2.14.0/cppcheck-2.14-win64.zip -OutFile cppcheck.zip
+          $url = "https://github.com/danmar/cppcheck/releases/download/2.14/Cppcheck-2.14-x64.zip"
+          Invoke-WebRequest -Uri $url -OutFile cppcheck.zip
           Expand-Archive cppcheck.zip -DestinationPath cppcheck
           $env:Path += ";$PWD\cppcheck"
           cppcheck\cppcheck.exe --version
