@@ -28,7 +28,7 @@ jobs:
           enable: all
           std: c11
           output_file: cppcheck_report.txt
-          include_paths: "Src"
+          other_options: "--error-exitcode=1 -I Src"
 
       # Upload Cppcheck report
       - name: Upload Cppcheck report
